@@ -1,0 +1,70 @@
+api_key      = "replace-with-api-key"
+auth_token   = "replace-with-bearer-token"
+api_endpoint = "https://api.e2enetworks.com"
+
+project_id = 12345
+location   = "Delhi"
+
+ssh_key = {
+  create     = true
+  name       = "e2e-demo-key"
+  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@host"
+}
+
+vpc = {
+  create     = true
+  name       = "e2e-demo-vpc"
+  ipv4_cidr  = "192.168.10.0/24"
+  is_e2e_vpc = false
+}
+
+security_group = {
+  create      = true
+  name        = "e2e-demo-sg"
+  description = "Web tier access"
+  default     = false
+  rules = [
+    {
+      rule_type     = "Inbound"
+      protocol_name = "Custom_TCP"
+      port_range    = "22"
+      network       = "any"
+      description   = "SSH"
+    },
+    {
+      rule_type     = "Inbound"
+      protocol_name = "Custom_TCP"
+      port_range    = "80"
+      network       = "any"
+      description   = "HTTP"
+    },
+    {
+      rule_type     = "Outbound"
+      protocol_name = "All"
+      port_range    = "All"
+      network       = "any"
+      description   = "Allow all egress"
+    }
+  ]
+}
+
+node = {
+  create = true
+  name   = "e2e-demo-node"
+  plan   = "C3.8GB"
+  image  = "Ubuntu 24.04 x86_64"
+}
+
+kubernetes = {
+  create  = false
+  name    = "e2e-demo-k8s"
+  version = "1.30"
+  node_pools = [
+    {
+      name           = "default-static"
+      specs_name     = "C3.8GB"
+      node_pool_type = "Static"
+      worker_node    = 2
+    }
+  ]
+}

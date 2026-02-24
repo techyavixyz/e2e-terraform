@@ -1,76 +1,25 @@
- resource "e2e_kubernetes" "kubernetes1" {
-    name                = "kubernetes_cluster_v1"
-    version             = "1.30"  //Just an example
-    project_id          = 30000   //Just an example
-    location            = "Delhi"
-    vpc_id              = "10001" //Just an example
-    security_group_ids  = [682, 683, 684] 
-    subnet_id           = "12345" 
+resource "e2e_kubernetes" "this" {
+  count = var.kubernetes.create ? 1 : 0
 
-    node_pools {
-        name          = "node_pool_1"
-        specs_name    = "C3.8GB"
-        node_pool_type = "Static"
-        worker_node   = 2
+  name       = var.kubernetes.name
+  version    = var.kubernetes.version
+  project_id = var.project_id
+  location   = var.location
+
+  vpc_id             = coalesce(try(var.kubernetes.vpc_id, null), try(e2e_vpc.this[0].vpc_id, null))
+  security_group_ids = var.security_group.create ? [e2e_security_groups.this[0].security_group_id] : []
+  subnet_id          = try(var.kubernetes.subnet_id, null)
+
+  dynamic "node_pools" {
+    for_each = var.kubernetes.node_pools
+
+    content {
+      name           = node_pools.value.name
+      specs_name     = node_pools.value.specs_name
+      node_pool_type = node_pools.value.node_pool_type
+      worker_node    = try(node_pools.value.worker_node, null)
+      min_vms        = try(node_pools.value.min_vms, null)
+      max_vms        = try(node_pools.value.max_vms, null)
     }
-
-    node_pools {
-        name          = "node_pool_2"
-        specs_name    = "C3.8GB"
-        node_pool_type = "Autoscale"
-        min_vms            = 2
-        max_vms            = 4
-
-        scheduled_dict {
-           worker {
-             scheduled_policies {
-               upscale_cardinality       = 4
-               upscale_recurrence        = "0 12 * * *"
-               downscale_cardinality     = 2
-               downscale_recurrence      = "0 2 * * *"
-             }
-           }
-        }
-    }
-
-    node_pools {
-        name          = "wnpn_v3"
-        specs_name    = "C3.8GB"
-        node_pool_type = "Autoscale"
-        min_vms            = 2
-        max_vms            = 4
-
-        scheduled_dict {
-          worker {
-             scheduled_policies {
-               upscale_cardinality       = 4
-               upscale_recurrence        = "0 12 * * *"
-               downscale_cardinality     = 2
-               downscale_recurrence      = "0 2 * * *"
-             }
-          }
-        }
-
-        elasticity_dict {
-          worker {
-            period_number      = 3
-            parameter      = "NETWORK_TRAFFIC"
-            policy_paramter_type = "Custom"
-            elasticity_policies {
-               operator       = ">"
-               value          = 60
-               period         = 10
-              watch_period   = 3
-              cooldown       = 150
-            }
-           elasticity_policies {
-               operator       = "<"
-               value          = 30
-               period         = 10
-               watch_period   = 3
-               cooldown       = 150
-           }
-         }
-       }
-    }
- } 
+  }
+}

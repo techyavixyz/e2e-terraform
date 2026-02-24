@@ -1,19 +1,16 @@
 terraform {
- required_providers {
-   e2e = {
-     source = "e2eterraformprovider/e2e"
-     version = "2.2.8"
-   }
- }
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    e2e = {
+      source  = "e2eterraformprovider/e2e"
+      version = "2.2.8"
+    }
+  }
 }
 
 provider "e2e" {
- api_key = < your e2e api key >
- auth_token = <your e2e auth bearer token>
- api_endpoint = 
-}
-
-# node creation
-resource "e2e_node" "node1" {
-   #...
+  api_key      = var.api_key
+  auth_token   = var.auth_token
+  api_endpoint = var.api_endpoint
 }
