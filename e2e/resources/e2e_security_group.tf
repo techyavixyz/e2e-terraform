@@ -1,26 +1,23 @@
-resource "e2e_security_groups" "web_sg" {
-  name        = "web-sg"
-  location    = "Delhi"
-  project_id  = "42914" 
-  description = "Web Tier Security Group"
-  default     = false
+resource "e2e_security_groups" "this" {
+  count = var.security_group.create ? 1 : 0
 
-  rules{
-      rule_type     = "Inbound"
-      protocol_name = "Custom_TCP"
-      port_range    = "80"
-      network       = "myNetwork"
-      network_cidr  = "vpc_4012" #provide your network_cidr. Find the format below in optional feilds.
-      size          = 24
-      description   = "Allow HTTP traffic"
+  name        = var.security_group.name
+  location    = var.location
+  project_id  = tostring(var.project_id)
+  description = var.security_group.description
+  default     = var.security_group.default
+
+  dynamic "rules" {
+    for_each = var.security_group.rules
+
+    content {
+      rule_type     = rules.value.rule_type
+      protocol_name = rules.value.protocol_name
+      port_range    = rules.value.port_range
+      network       = rules.value.network
+      network_cidr  = try(rules.value.network_cidr, null)
+      size          = try(rules.value.size, null)
+      description   = try(rules.value.description, null)
     }
-
-    rules{
-      rule_type     = "Outbound"
-      protocol_name = "All"
-      port_range    = "All"
-      network       = "any"
-      description   = "Allow all outbound"
-    }
-
+  }
 }
